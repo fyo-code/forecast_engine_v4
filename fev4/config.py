@@ -50,3 +50,27 @@ MANIFEST_OUT = MATTRESS_DIR / "build_manifest.json"
 # Demand timing: mattresses are short-lag, so DATA ≈ DATA COMANDA (see 03_DATA_SPEC.md).
 DEMAND_DATE_SOURCE = "DATA (invoice/fulfillment; short-lag for mattresses)"
 KNOWN_ROUTES = ("offline", "online", "outlet")
+
+# --- Phase A: demand engine ---
+# Modeling cohort (chain fast-movers); thresholds are as-of the train cutoff (leakage-safe).
+FASTMOVER_MIN_ACTIVE_WEEKS = 26
+FASTMOVER_MIN_UNITS = 52
+FASTMOVER_LOOKBACK_WEEKS = 52
+# Wider eval cohort (to demonstrate pooling helps the sparse tail).
+MODEL_MIN_ACTIVE_WEEKS = 13
+
+LAGS = (1, 2, 4, 8, 13)
+ROLLING = (4, 8, 13)
+QUANTILES = (0.1, 0.5, 0.9, 0.95)
+
+# Temporal holdout: last N weeks are the test period (forecasts use only earlier data).
+TEST_WEEKS = 26
+
+# --- Phase B: reorder policy (confirmed defaults; all overridable) ---
+PROTECTION_WINDOW_WEEKS = 2     # weekly review + ~1wk lead (lead time unknown -> default)
+SERVICE_LEVEL = 0.95
+
+MODEL_OUT_DIR = MATTRESS_DIR
+CHAIN_FORECAST_OUT = MATTRESS_DIR / "chain_weekly_forecast.parquet"
+STORE_SHARES_OUT = MATTRESS_DIR / "store_allocation_shares.parquet"
+DEMAND_METRICS_OUT = MATTRESS_DIR / "demand_model_metrics.json"
