@@ -46,7 +46,7 @@ Data is **not copied into V4 yet.** Pull the mattress slice when building v1.
 | `CATEGORIE` / `CLASA` / `SUBCLASA` | product hierarchy (sparse coverage: 2/4/11 files). |
 | `DENUMIRE ARTICOL` | product name/text (mattress identification, dims, family). |
 | `DIMENSIUNI` | size (size buckets, bulky-item behavior). |
-| `NECESITA MONTAJ` | `NMU`=no montage, `NMD`=montage required (friction/lead signal). |
+| `NECESITA MONTAJ` | montage/assembly need. Codes: `NMU`=no montage, `NMD`=montage required. **V4 finding (mattress slice): the dominant code is `NNM` (2,176 of 2,287 SKUs), undocumented before — treat as "no montage required"; `NMU`=106, `NMD`=3.** Friction/lead signal. |
 | `FURNIZOR` / `FURNIZOR EXT` / `ID FURNIZOR` | supplier (lead-time / family context). |
 | `ID FACTURA` / `ID COMANDA` / `NR COMANDA` / `ID CLIENT` | identity & order structure; `ID CLIENT` enables B2B/contract-order detection. Use for identity/merge, not blind features. |
 | `ACTIV` / `ACTIV ONLINE` / `VECHIME IN COLECTIE` | current-snapshot live gates only (leakage if used historically). |
@@ -61,6 +61,7 @@ Tier A: invoice-line identity (`ID FACTURA` + SKU/store/measures). Tier B: exact
 - **The V3 lake (`raw_active_v1`, 41 cols) dropped:** `CAMPANIE*`, `DIMENSIUNI`, `CATEGORIE/CLASA/SUBCLASA`, `STIL/SUBSTIL`, `GRUPA/GRUPA_PRODUSE`, `NECESITA MONTAJ`. They exist in the CSVs — V4 must re-ingest keeping them.
 - **Field coverage in the lake:** `DATA` 95%, discount 99%, channel 38%, `id_comanda` 10%, `id_client` 31%, `denumire` 8% (P1/P2 split → fragmented; fix via SKU-level attribute attachment).
 - **Category columns are sparse at file level:** `GRUPA_PRODUSE` (36/83) is the workhorse; `CATEGORIE` only 2/83.
+- **Row-level channel is weak on the demand layer.** In the V4 mattress slice, the de-duplicated demand rows have route known for only ~38% (offline 28% / online 8% / outlet 2% / **unknown 62%**), because channel lives in P1 and demand rows often come from P2. Treat channel as a **SKU×store propensity feature**, not per-row truth; most "unknown" mattress demand is offline. Attribute coverage on the mattress slice: `DIMENSIUNI` 100%, `NECESITA MONTAJ` 100%, `FURNIZOR` 84%, `DENUMIRE ARTICOL` 51%, `CLASA` 41%, `CATEGORIE` 33%.
 
 ## 6. Store normalization
 
