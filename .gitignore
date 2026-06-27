@@ -1,0 +1,23 @@
+# Data — large, pulled from the source repo or dropped locally; never committed
+data/
+*.parquet
+*.db
+*.sqlite
+*.csv
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Scratch / temp
+scratch/
+tmp/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
