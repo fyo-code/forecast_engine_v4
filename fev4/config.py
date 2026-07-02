@@ -47,6 +47,33 @@ SKU_ATTR_OUT = MATTRESS_DIR / "mattress_sku_attributes.parquet"
 WEEKLY_FACTS_OUT = MATTRESS_DIR / "mattress_weekly_facts.parquet"
 MANIFEST_OUT = MATTRESS_DIR / "build_manifest.json"
 
+
+def cohort_paths(slug: str) -> dict:
+    """Output paths for a category cohort slice (e.g. slug='rugs_v1')."""
+    d = DATA_DIR / slug
+    return {
+        "dir": d,
+        "sku_attr": d / "sku_attributes.parquet",
+        "weekly": d / "weekly_facts.parquet",
+        "manifest": d / "build_manifest.json",
+    }
+
+
+# --- Rugs (COVOARE) cohort ---
+RUGS_GROUP = "COVOARE"
+RUGS_SLUG = "rugs_v1"
+
+# Monthly store-warehouse stock snapshots (wide CSVs, one per store).
+STORE_STOCK_FILES = {
+    "CONSTANTA": SOURCE_REPO / "new_stock_data_20may" / "const_magazin_stock.csv",
+    "IASI": SOURCE_REPO / "new_stock_data_20may" / "iasi_magazin_stock.csv",
+    "ORADEA": SOURCE_REPO / "new_stock_data_20may" / "oradea_magazin_stock.csv",
+}
+RO_MONTHS = {
+    "IANUARIE": 1, "FEBRUARIE": 2, "MARTIE": 3, "APRILIE": 4, "MAI": 5, "IUNIE": 6,
+    "IULIE": 7, "AUGUST": 8, "SEPTEMBRIE": 9, "OCTOMBRIE": 10, "NOIEMBRIE": 11, "DECEMBRIE": 12,
+}
+
 # Demand timing: mattresses are short-lag, so DATA ≈ DATA COMANDA (see 03_DATA_SPEC.md).
 DEMAND_DATE_SOURCE = "DATA (invoice/fulfillment; short-lag for mattresses)"
 KNOWN_ROUTES = ("offline", "online", "outlet")

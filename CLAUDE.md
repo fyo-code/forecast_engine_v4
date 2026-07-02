@@ -46,5 +46,5 @@ Data is millions of rows; it is **not** copied into V4 yet. When we start the v1
 
 ## 6. Current status / next step
 
-- **Status:** direction set, evidence captured, workspace initialized. No V4 code yet.
-- **Next step:** the v1 mattress build — clean ingestion (all columns, SKU×store grain, leakage-tagged) → probabilistic demand engine → reorder policy → shadow-backtest. Plan in `02_ENGINE_ARCHITECTURE.md` §"v1 build plan".
+- **Status:** engine v1 built and gate-passed on mattresses (Phases A–D, `RESULTS_V1.md`). Cohort then **pivoted to rugs (COVOARE)** — see decision **D9** in `01_PRODUCT_DIRECTION.md` and `PHASE0_RUG_FEASIBILITY.md`: rugs have complete data (sales + monthly store stock + rotation) and a validated, accessible user (the rug PM, who already uses an internal naive reorder module built from V's prototype). Phase 0 passed: real replenishment reconstructs from Δstock+sales → three-way backtest (ours vs module-logic vs actual) is viable.
+- **Next step:** Phase 1 — define the MVP working backwards from the 10-minute V demo (three panels: reorder+quantity, kill-list, head-to-head proof); then Phase 2 — engine re-point + stock-aware reorder, occurrence model for sparse SKU×store, design-family pooling.

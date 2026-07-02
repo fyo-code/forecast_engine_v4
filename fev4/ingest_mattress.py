@@ -39,8 +39,8 @@ def _connect() -> duckdb.DuckDBPyConnection:
     return con
 
 
-def select_mattress_skus(con: duckdb.DuckDBPyConnection) -> list[str]:
-    """Mattress SKUs = those whose modal GRUPA_PRODUSE is the cohort group."""
+def select_cohort_skus(con: duckdb.DuckDBPyConnection, group: str = config.COHORT_GROUP) -> list[str]:
+    """Cohort SKUs = those whose modal GRUPA_PRODUSE is the requested group."""
     con.execute(
         f"""
         CREATE OR REPLACE TEMP TABLE sku_group AS
@@ -59,10 +59,14 @@ def select_mattress_skus(con: duckdb.DuckDBPyConnection) -> list[str]:
         """
     )
     skus = con.execute(
-        "SELECT sku FROM sku_group WHERE grp = ? ORDER BY sku", [config.COHORT_GROUP]
+        "SELECT sku FROM sku_group WHERE grp = ? ORDER BY sku", [group]
     ).df()["sku"].tolist()
     con.execute("CREATE OR REPLACE TEMP TABLE mat AS SELECT UNNEST(?) AS sku", [skus])
     return skus
+
+
+# Backward-compatible alias (Phase A/B/C modules and tests referenced the old name).
+select_mattress_skus = select_cohort_skus
 
 
 def _mode(series: pd.Series) -> object:
@@ -187,21 +191,30 @@ class BuildSummary:
     checks: dict
 
 
-def run() -> BuildSummary:
-    config.MATTRESS_DIR.mkdir(parents=True, exist_ok=True)
+def run(group: str = config.COHORT_GROUP, slug: str | None = None) -> BuildSummary:
+    if slug is None:
+        out_dir, attr_out, weekly_out, manifest_out = (
+            config.MATTRESS_DIR, config.SKU_ATTR_OUT, config.WEEKLY_FACTS_OUT, config.MANIFEST_OUT,
+        )
+    else:
+        paths = config.cohort_paths(slug)
+        out_dir, attr_out, weekly_out, manifest_out = (
+            paths["dir"], paths["sku_attr"], paths["weekly"], paths["manifest"],
+        )
+    out_dir.mkdir(parents=True, exist_ok=True)
     con = _connect()
 
-    skus = select_mattress_skus(con)
+    skus = select_cohort_skus(con, group)
     attrs = build_sku_attributes(con)
     weekly = build_weekly_facts(con)
     checks = conservation_checks(con, weekly)
 
-    attrs.to_parquet(config.SKU_ATTR_OUT, index=False)
-    weekly.to_parquet(config.WEEKLY_FACTS_OUT, index=False)
+    attrs.to_parquet(attr_out, index=False)
+    weekly.to_parquet(weekly_out, index=False)
 
     summary = BuildSummary(
         built_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        cohort_group=config.COHORT_GROUP,
+        cohort_group=group,
         n_mattress_skus=len(skus),
         n_skus_with_demand=int(weekly["sku_id"].nunique()),
         n_stores=int(weekly["store_code"].nunique()),
@@ -211,13 +224,19 @@ def run() -> BuildSummary:
         demand_date_source=config.DEMAND_DATE_SOURCE,
         checks=checks,
     )
-    config.MANIFEST_OUT.write_text(json.dumps(asdict(summary), indent=2), encoding="utf-8")
+    manifest_out.write_text(json.dumps(asdict(summary), indent=2), encoding="utf-8")
     con.close()
     return summary
 
 
 def main() -> None:
-    s = run()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Ingest a category cohort slice (SKU x store x week).")
+    parser.add_argument("--group", default=config.COHORT_GROUP, help="GRUPA_PRODUSE cohort value")
+    parser.add_argument("--slug", default=None, help="output dir slug under data/ (default: mattress_v1)")
+    args = parser.parse_args()
+    s = run(group=args.group.upper(), slug=args.slug)
     print("Forecast V4 — mattress slice ingested")
     print(f"  cohort group:        {s.cohort_group}")
     print(f"  mattress SKUs:       {s.n_mattress_skus:,}  (with demand: {s.n_skus_with_demand:,})")
@@ -227,7 +246,8 @@ def main() -> None:
     print("  conservation checks:")
     for k, v in s.checks.items():
         print(f"    {k}: {v}")
-    print(f"  outputs: {config.MATTRESS_DIR}")
+    out_dir = config.MATTRESS_DIR if args.slug is None else config.cohort_paths(args.slug)["dir"]
+    print(f"  outputs: {out_dir}")
     if not s.checks["all_passed"]:
         raise SystemExit("CONSERVATION CHECKS FAILED — do not proceed to modeling.")
 
