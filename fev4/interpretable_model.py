@@ -125,8 +125,9 @@ def predict(panel: pd.DataFrame, fam: pd.DataFrame, cutoff: pd.Timestamp,
     rows["lam"] = (rows["pooled_rate"] * window_weeks * rows["season"] * rows["trend"]).clip(lower=0.0)
 
     lam = rows["lam"].to_numpy()
-    out = rows[["sku_id", "store_code", "family", "roll13", "family_store_rate",
-                "pooled_rate", "season", "trend", "lam", "weeks_since_sale"]].copy()
+    out = rows[["sku_id", "store_code", "family", "roll4", "roll13", "pos13", "hist_weeks",
+                "family_store_rate", "pooled_rate", "season", "trend", "lam",
+                "weeks_since_sale"]].copy()
     if phi <= 1.05:
         for q in quants:
             out[f"p{int(q*100)}"] = stats.poisson.ppf(q, lam)

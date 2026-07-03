@@ -28,7 +28,7 @@ OUT = PATHS["dir"] / "sku_families.parquet"
 # A token that starts the size/variant tail: 080x150, 160x230 cm, L.170, l.120,
 # 160cm, ROTUND, or a pure number (variant codes like "6015", "01").
 _SIZE_TOKEN = re.compile(
-    r"^(\d{2,3}\s*[xX]\s*\d{2,3}|[Ll]\.?\d+|\d+\s*[Cc][Mm]|ROTUND\w*|OVAL\w*|\d+)$"
+    r"^(\d{2,3}\s*[xX]\s*\d{2,3}(?:\s*[Cc][Mm])?|[Ll]\.?\d+|\d+\s*[Cc][Mm]|ROTUND\w*|OVAL\w*|\d+)$"
 )
 _LEAD = re.compile(r"^COVOR(?:AS)?\b", re.IGNORECASE)
 _OUTDOOR = re.compile(r"\bDE\s+EXTERIOR\b|\bEXTERIOR\b|\bOUTDOOR\b", re.IGNORECASE)
