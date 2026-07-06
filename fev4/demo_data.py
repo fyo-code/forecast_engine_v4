@@ -268,6 +268,9 @@ def build() -> dict:
             "transit stock (Stoc Tranzit) not in available data -> assumed 0; add when export exists",
             "product state codes (ACU/RPD/COM/OUC/WWW) not in available data -> filter disabled",
             "stock snapshot is monthly EOM -> staleness shown as stock_as_of",
+            "IMPORTANT: new-store stock extends to Jun 2026 but SALES data ends Dec 2025 -> "
+            "forward rates + kill-list recency are computed at the sales edge; a 2026 sales "
+            "export is the next refresh that removes this gap",
         ],
     }
     (DEMO / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")

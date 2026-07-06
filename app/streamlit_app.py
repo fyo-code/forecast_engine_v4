@@ -38,7 +38,7 @@ d0, WK, MS, META, DIS = load()
 
 # ---------------- sidebar: navigation + the PM-configurable parameters ----------
 st.sidebar.title("Stockly")
-st.sidebar.caption(f"Rugs · Constanta / Iasi / Oradea · data as of {META['as_of']}")
+st.sidebar.caption(f"Rugs · {d0['store_code'].nunique()} stores · data as of {META['as_of']}")
 page = st.sidebar.radio("Page", [
     "1 · Stock Health Dashboard", "2 · Order Builder", "3 · Overstock & Kill-list",
     "4 · Proof (on your own history)", "5 · Transparency — every formula",

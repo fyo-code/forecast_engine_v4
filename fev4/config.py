@@ -64,10 +64,16 @@ RUGS_GROUP = "COVOARE"
 RUGS_SLUG = "rugs_v1"
 
 # Monthly store-warehouse stock snapshots (wide CSVs, one per store).
+# First three: original May-2026 export (through Dec 2025). Last four: fresh
+# July-2026 export dropped into this repo (through June 2026).
 STORE_STOCK_FILES = {
     "CONSTANTA": SOURCE_REPO / "new_stock_data_20may" / "const_magazin_stock.csv",
     "IASI": SOURCE_REPO / "new_stock_data_20may" / "iasi_magazin_stock.csv",
     "ORADEA": SOURCE_REPO / "new_stock_data_20may" / "oradea_magazin_stock.csv",
+    "BANEASA": PROJECT_ROOT / "stock_magazin_baneasa.csv",
+    "PIPERA": PROJECT_ROOT / "stock_magazin_pipera.csv",
+    "SIBIU": PROJECT_ROOT / "stock_magazin_sibiu.csv",
+    "BRASOV": PROJECT_ROOT / "stock_magazin_brasov.csv",
 }
 RO_MONTHS = {
     "IANUARIE": 1, "FEBRUARIE": 2, "MARTIE": 3, "APRILIE": 4, "MAI": 5, "IUNIE": 6,
