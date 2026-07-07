@@ -44,6 +44,10 @@ LEAD_TIME_DAYS = 30
 SAFETY_DAYS = 7
 ROCKET_RATIO = 1.20         # their spec: >=20% above recent average
 OVERSTOCK_DAYS = 90
+# A 0-store-stock rug still sells (central/to-order; ACTIV=Da), so "0 days cover"
+# is not an emergency by itself. Only flag critical/urgent when forward demand is
+# material — otherwise the alert list fills with trickle-sellers. See FINDINGS §5.
+MIN_MATERIAL_MONTHLY = 0.5  # >= ~6 units/year to qualify as a genuine shortage risk
 
 
 # --------------------------------------------------------------------------- #
@@ -128,7 +132,8 @@ def warning_quality(panel, monthly, fam) -> dict:
         m["should_warn"] = m["units"] > m["stock_start"]
         for who in ("ours", "theirs"):
             rate = m[f"rate_{who}"].to_numpy()
-            cover = np.where(rate > 0, m["stock_start"].to_numpy() / rate, np.inf)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                cover = np.where(rate > 0, m["stock_start"].to_numpy() / rate, np.inf)
             m[f"warn_{who}"] = np.isin(segment_days_cover(cover), ["critical", "urgent"])
         m["cutoff"] = c
         rows.append(m)
@@ -202,9 +207,14 @@ def build() -> dict:
     d["rate_ours"] = d["lam_cal"] / horizon
     for who in ("ours", "theirs"):
         rate = d[f"rate_{who}"].to_numpy()
-        cover = np.where(rate > 0, d["stock"].to_numpy() / rate, np.inf)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            cover = np.where(rate > 0, d["stock"].to_numpy() / rate, np.inf)
         d[f"days_cover_{who}"] = np.round(cover, 1)
-        d[f"segment_{who}"] = segment_days_cover(cover)
+        seg = segment_days_cover(cover)
+        # materiality gate: a trickle-seller at 0 stock is a slow reorder, not a fire
+        immaterial = (rate * 30.0) < MIN_MATERIAL_MONTHLY
+        seg = np.where(immaterial & np.isin(seg, ["critical", "urgent"]), "attention", seg)
+        d[f"segment_{who}"] = seg
     d["stockout_risk_pct"] = np.round(100 * stockout_risk(d["lam_lt"].fillna(0).to_numpy(),
                                                           d["stock"].to_numpy()), 1)
     # Rocket (their spec: velocity >= 20% above recent average)
@@ -242,6 +252,29 @@ def build() -> dict:
         return "; ".join(bits)
 
     d["because"] = d.apply(because, axis=1)
+
+    # months since last sale (for honest dead-stock language: "no sale in N months")
+    d["months_since_sale"] = (d["wss_kill"].fillna(d["weeks_since_sale"]).fillna(0) / 4.345).round(0)
+
+    # one plain-language recommendation per row + a numeric priority for sorting,
+    # so the PM sees WHAT TO DO without decoding five columns.
+    seg = d["segment_ours"]; killc = d["klass"]; oq = d["order_qty"]
+    action = np.select(
+        [(seg.isin(["critical", "urgent"])) & (oq > 0),
+         d["rocket"] & (oq > 0),
+         killc == "dead",
+         killc == "dying",
+         oq > 0,
+         (seg == "overstock") & (d["stock"] > 0)],
+        ["Reorder now", "Reorder — accelerating", "Stop & clear", "Stop reordering",
+         "Reorder", "Overstocked — hold"],
+        default="OK — no action",
+    )
+    d["action"] = action
+    d["order_action_qty"] = np.where(np.char.find(action.astype(str), "Reorder") >= 0, oq, 0)
+    seg_rank = {"critical": 0, "urgent": 1, "attention": 2, "ok": 3, "overstock": 4}
+    d["priority"] = (seg.map(seg_rank).fillna(5).astype(int) * 1_000_000
+                     - d["trapped_value"].fillna(0).astype(int).clip(lower=0))
     d.to_parquet(DEMO / "dashboard.parquet", index=False)
 
     # drill-down series

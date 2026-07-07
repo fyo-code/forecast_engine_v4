@@ -26,6 +26,12 @@ from scipy import stats
 
 from . import config
 
+ACTIVE_WEEKS = 2          # a SKU x store gets a forecast if it sold within this many weeks.
+# Tested 2 vs 13 on the 2026 backtest: widening recovers more sparse sellers but
+# balloons over-prediction of stale marginal SKUs (market-neutral bias -1.8% -> +31%)
+# without capturing the reactivation demand (those are >13w gaps). 2w keeps the
+# forecast honest and the reorder set lean; the 24% reactivation demand is a
+# documented, accepted blind spot, not something to chase. See FINDINGS §3/§5.
 PHI = 3.0                 # NB dispersion prior (var = PHI * mean); calibration absorbs error
 SHRINK_K = 6.0            # weeks of family evidence equivalent in the rate shrinkage
 SEASON_SHRINK = 400.0     # units of family volume at which family index dominates category
@@ -34,17 +40,20 @@ SEASON_CLIP = (0.5, 2.0)
 QUANTS = (0.5, 0.9, 0.95)
 
 
-def _asof_rows(panel: pd.DataFrame, cutoff: pd.Timestamp, stores: list[str]) -> pd.DataFrame:
+def _asof_rows(panel: pd.DataFrame, cutoff: pd.Timestamp, stores: list[str],
+               active_weeks: int = ACTIVE_WEEKS) -> pd.DataFrame:
     """Decision row per active SKU x store: the last panel week <= cutoff.
 
     That row's trailing features cover weeks strictly BEFORE it, hence strictly
-    before the cutoff — leakage-safe by construction.
+    before the cutoff — leakage-safe by construction. ``active_weeks`` sets how
+    recently a SKU must have transacted to still get a forecast (rug demand is
+    sporadic, so a 2-week window silently drops ~a quarter of real buyers — see
+    BACKTEST_2026_FINDINGS.md §3).
     """
     p = panel[(panel["store_code"].isin(stores)) & (panel["week_start"] <= cutoff)]
     idx = p.groupby(["sku_id", "store_code"])["week_start"].idxmax()
     rows = p.loc[idx].copy()
-    # active = observed on some week in the trailing 26w (span alive at cutoff)
-    return rows[rows["week_start"] >= cutoff - pd.Timedelta(weeks=2)]
+    return rows[rows["week_start"] >= cutoff - pd.Timedelta(weeks=active_weeks)]
 
 
 def _family_rates(panel: pd.DataFrame, fam: pd.DataFrame, cutoff: pd.Timestamp,
