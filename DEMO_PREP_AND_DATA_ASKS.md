@@ -7,17 +7,15 @@ This captures decisions/asks discussed but not yet elsewhere on disk.
 `cd forecast_engine_v4 && .venv/bin/streamlit run app/streamlit_app.py` (default port 8501, or `--server.port 8601`).
 Rebuild its data after any new export: `python -m fev4.stock_ingest && python -m fev4.demo_data`.
 
-## Current headline numbers (7 stores, defaults LT30/SS7/P90)
-- Kill-list / Overstock: **~5.09M lei trapped** (Baneasa alone ~1.1M).
-- Warning quality (850,701 decisions, 26,152 real shortfalls): engine recall **29%** vs module **26%**; precision **18%** vs **10%**; 42% fewer warnings issued.
-- Segments (engine): critical 274, urgent 21, attention 35, ok 55, overstock 8,178.
+## Current headline numbers (7 stores, clean+2026 data, defaults LT30/SS7/P90) — updated 2026-07-08
+- Segments (engine): **critical 8, attention 91, ok 30, overstock 8,310** (critical was 274 before the de-dup fix + materiality gate — see `BACKTEST_2026_FINDINGS.md`).
+- Reorder book: **129 SKUs, ~201 units** (lean; 8 genuine criticals + 18 accelerating).
+- Trapped capital: ~6.65M lei in dead/dying stock; **~3.65M is truly-dead** (0 sales in 2026 — the number to quote).
+- 2026 out-of-sample: market −23%; forecast market-neutral bias −1.8%; P90 coverage 92% on unseen data.
 
 ## Data asks (in priority order)
-1. **2026 sales (Jan–Jun+), same 7 stores** — closes the gap (stock reaches Jun 2026, sales stop Dec 2025). Exact spec:
-   - Must-have cols: `COD ARTICOL` (same key as stock `ARTICOL COD`), `MAGAZIN`, `DATA`, `CANTITATE FACTURATA` (keep negatives=returns), `VALOARE FACTURATA`, `GRUPA_PRODUSE`.
-   - Nice: `DENUMIRE ARTICOL` (family — matters for NEW 2026 SKUs), `DIMENSIUNI`, `Reducere %`, `DATA COMANDA`.
-   - **Final-client sales only** (exclude inter-store transfers — see decision below). Prefer ONE file/store (not P1/P2 split) to avoid measure double-count; if split, flag it and I de-dup.
-2. **Re-pull stock for Constanta/Iasi/Oradea to current month** (they stop at Dec 2025; the other 4 reach Jun 2026 — mixed as-of dates shown per row).
+1. ~~**2026 sales, same 7 stores**~~ **DELIVERED 2026-07-07** (`sales_2026/*.csv`, one file/store, final-client, exactly the requested columns). Integrated → gap closed; engine now runs to Jul 2026.
+2. **Re-pull stock for Constanta/Iasi/Oradea to current month** (they stop at Dec 2025; the other 4 reach Jun 2026 — mixed as-of dates shown per row). Now the top open ask.
 3. **Transit / on-order quantity** (Stoc Tranzit) — in the PM's own Days-of-Cover formula; currently assumed 0.
 4. **Product-state codes** (ACU/RPD/COM/OUC/WWW) — enables the PM-spec state filter (disabled now).
 
