@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "stockly",
-      "runtimeExecutable": ".venv/bin/streamlit",
-      "runtimeArgs": ["run", "app/streamlit_app.py", "--server.headless=true", "--server.port=8601", "--browser.gatherUsageStats=false"],
+      "runtimeExecutable": ".venv/bin/uvicorn",
+      "runtimeArgs": ["app.server:app", "--port", "8601"],
       "port": 8601
     }
   ]

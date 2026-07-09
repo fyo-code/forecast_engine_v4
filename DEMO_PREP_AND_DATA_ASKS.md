@@ -3,9 +3,10 @@
 Date: 2026-07-06. State: app built and running on 7 stores; next phase = demo to V, then feedback.
 This captures decisions/asks discussed but not yet elsewhere on disk.
 
-## Run the app
-`cd forecast_engine_v4 && .venv/bin/streamlit run app/streamlit_app.py` (default port 8501, or `--server.port 8601`).
-Rebuild its data after any new export: `python -m fev4.stock_ingest && python -m fev4.demo_data`.
+## Run the app (UI v2 — FastAPI + Tabulator)
+`cd forecast_engine_v4 && .venv/bin/uvicorn app.server:app --port 8601` → http://localhost:8601 (RO by default, EN switch in footer).
+Rebuild data after any new export: `python -m fev4.ingest_rugs && python -m fev4.families && python -m fev4.demo_data` (and `python -m fev4.backtest_2026 && python -m fev4.backtest_2026_value` to refresh the Proof page).
+Legacy Streamlit app still at `app/streamlit_app.py` (fallback only).
 
 ## Current headline numbers (7 stores, clean+2026 data, defaults LT30/SS7/P90) — updated 2026-07-08
 - Segments (engine): **critical 8, attention 91, ok 30, overstock 8,310** (critical was 274 before the de-dup fix + materiality gate — see `BACKTEST_2026_FINDINGS.md`).

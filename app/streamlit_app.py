@@ -1,5 +1,10 @@
 """Forecast V4 — the rug replenishment copilot (demo app).
 
+LEGACY (kept as fallback). The live app is now FastAPI + Tabulator: `app/server.py`
++ `app/web/` (run `.venv/bin/uvicorn app.server:app --port 8601`). This Streamlit
+version is retained until the v2 UI is confirmed; its recompute() is the reference
+port for the backend. Do not add features here.
+
 The PM's requested framework (procurement_tool_V.md) — Days-of-Cover segments,
 Lead Time / Safety Stock / MOQ, Rocket alerts, Order Builder, dual calendars —
 powered by the V4 calibrated demand engine instead of the flat 120-day average.

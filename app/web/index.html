@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stockly — Rug Replenishment</title>
+  <link rel="stylesheet" href="/vendor/tabulator.min.css">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <div class="head-top">
+      <div class="brand">📦 Stockly <small id="subtitle"></small></div>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+
+  <main id="main"></main>
+
+  <div class="drawer-scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true"></aside>
+
+  <footer>
+    <span id="footer-note"></span>
+    <span class="lang-switch">
+      <span id="lang-label"></span>
+      <button data-lang="ro">RO</button>
+      <button data-lang="en">EN</button>
+    </span>
+  </footer>
+
+  <script src="/vendor/tabulator.min.js"></script>
+  <script src="/vendor/chart.umd.min.js"></script>
+  <script src="/i18n.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
